@@ -165,9 +165,11 @@
         <img src="celebration.jpg" alt="Love" id="heartImage">
     </div>
     
-    <source src="celebrations.mp3" type="audio/mpeg">
-    <audio id="partySound">
-        <source src="https://www.soundjay.com/human/party-horn-01.mp3" type="audio/mpeg">
+    <!-- Sound -->
+    <audio id="partySound" preload="auto">
+        <source src="celebrations.mp3" type="audio/mpeg">
+        <source src="celebrations.wav" type="audio/wav">
+        <source src="celebrations.ogg" type="audio/ogg">
     </audio>
     
     <script>
@@ -193,9 +195,15 @@
             if (hasClickedYes) return; // Prevent multiple clicks
             hasClickedYes = true;
             
-            // Play sound with error handling
-            sound.play().catch(err => {
-                console.log("Sound autoplay blocked - user interaction needed");
+            // Set volume and play sound
+            sound.volume = 1.0; // Maximum volume
+            sound.currentTime = 0; // Start from beginning
+            
+            sound.play().then(() => {
+                console.log("🎵 Sound is playing!");
+            }).catch(err => {
+                console.error("❌ Sound error:", err);
+                alert("Sound failed to play. Check console for details.");
             });
             
             // Hide initial elements
