@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,148 +7,255 @@
         body {
             margin: 0;
             height: 100vh;
-            background-color: white;
-            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ffc3d5 0%, #ffe5ec 100%);
+            font-family: 'Arial', sans-serif;
             overflow: hidden;
-
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
-
-        img {
-            margin-top: 40px;
+        
+        .initial-image {
             width: 300px;
+            margin-bottom: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-
+        
         .button-container {
-            margin-top: 80px;
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            justify-content: center;
             z-index: 10;
         }
-
+        
         button {
-            padding: 15px 30px;
-            font-size: 18px;
-            margin: 10px;
+            padding: 20px 50px;
+            font-size: 24px;
+            font-weight: bold;
             cursor: pointer;
             border: none;
-            border-radius: 8px;
-            transition: transform 0.2s ease;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-
+        
         .yes {
-            background-color: #4CAF50;
+            background: linear-gradient(135deg, #ff6b9d 0%, #c86dd7 100%);
             color: white;
         }
-
+        
+        .yes:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255,107,157,0.4);
+        }
+        
         .no {
-            background-color: #f44336;
+            background: linear-gradient(135deg, #ff8a80 0%, #ff5252 100%);
             color: white;
         }
-
-        /* Confetti */
+        
+        /* Confetti - looks like paper pieces */
         .confetti {
             position: absolute;
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             top: -10px;
+            opacity: 0.9;
             animation: fall linear forwards;
         }
-
+        
         @keyframes fall {
-            to {
-                transform: translateY(110vh) rotate(720deg);
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(110vh) rotate(1080deg);
+                opacity: 0.7;
             }
         }
-
-        /* Balloons */
+        
+        /* Balloons - more realistic shape */
         .balloon {
             position: absolute;
             bottom: -100px;
-            width: 40px;
-            height: 50px;
-            border-radius: 50%;
-            animation: rise linear forwards;
+            width: 50px;
+            height: 65px;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            animation: rise ease-in forwards;
         }
-
+        
+        .balloon::before {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 80px;
+            background: transparent;
+        }
+        
+        .balloon::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: inherit;
+            border-radius: 50%;
+        }
+        
         @keyframes rise {
-            to {
-                transform: translateY(-120vh);
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 1;
             }
+            100% {
+                transform: translateY(-120vh) translateX(var(--drift));
+                opacity: 0.8;
+            }
+        }
+        
+        /* Spinning heart image */
+        .heart-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0) rotate(0deg);
+            opacity: 0;
+            z-index: 100;
+            transition: all 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .heart-container.show {
+            transform: translate(-50%, -50%) scale(1) rotate(720deg);
+            opacity: 1;
+        }
+        
+        .heart-container img {
+            width: 400px;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(255,107,157,0.6);
+            border: 5px solid white;
+        }
+        
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
-
-    <img src="https://via.placeholder.com/300" alt="Photo">
-
-    <div class="button-container">
-        <button class="yes" id="yesButton">Yes</button>
+    <img src="https://via.placeholder.com/300/ffc3d5/ff69b4?text=Question+Photo" alt="Photo" class="initial-image" id="initialImage">
+    
+    <div class="button-container" id="buttonContainer">
+        <button class="yes" id="yesButton">Yes! 💖</button>
         <button class="no" id="noButton">No</button>
     </div>
-
+    
+    <!-- Heart container for the big reveal -->
+    <div class="heart-container" id="heartContainer">
+        <img src="https://via.placeholder.com/400/ff69b4/ffffff?text=Yes!+❤️" alt="Love" id="heartImage">
+    </div>
+    
     <!-- Sound -->
     <audio id="partySound">
         <source src="https://www.soundjay.com/human/party-horn-01.mp3" type="audio/mpeg">
     </audio>
-
+    
     <script>
         const noButton = document.getElementById("noButton");
         const yesButton = document.getElementById("yesButton");
         const sound = document.getElementById("partySound");
-
+        const heartContainer = document.getElementById("heartContainer");
+        const initialImage = document.getElementById("initialImage");
+        const buttonContainer = document.getElementById("buttonContainer");
+        
         let scale = 1;
-
+        let hasClickedYes = false;
+        
         // NO BUTTON LOGIC
         noButton.addEventListener("click", function() {
-            scale *= 1.2;
-            noButton.style.transform = `scale(${scale})`;
+            scale += 0.2;
+            yesButton.style.transform = `scale(${scale})`;
             noButton.textContent = "Are you sure?";
         });
-
+        
         // YES BUTTON LOGIC
         yesButton.addEventListener("click", function() {
-
-            // Play sound
-            sound.play();
-
-            // Create confetti
+            if (hasClickedYes) return; // Prevent multiple clicks
+            hasClickedYes = true;
+            
+            // Play sound with error handling
+            sound.play().catch(err => {
+                console.log("Sound autoplay blocked - user interaction needed");
+            });
+            
+            // Hide initial elements
+            initialImage.classList.add('hidden');
+            buttonContainer.classList.add('hidden');
+            
+            // Show spinning heart
+            setTimeout(() => {
+                heartContainer.classList.add('show');
+            }, 100);
+            
+            // Create confetti continuously
+            setInterval(() => {
+                for (let i = 0; i < 3; i++) {
+                    createConfetti();
+                }
+            }, 200);
+            
+            // Create balloons continuously
+            setInterval(() => {
+                createBalloon();
+            }, 800);
+            
+            // Initial burst
             for (let i = 0; i < 100; i++) {
-                const confetti = document.createElement("div");
-                confetti.classList.add("confetti");
-
-                confetti.style.left = Math.random() * 100 + "vw";
-                confetti.style.backgroundColor =
-                    `hsl(${Math.random() * 360}, 100%, 50%)`;
-
-                confetti.style.animationDuration =
-                    (Math.random() * 3 + 2) + "s";
-
-                document.body.appendChild(confetti);
-
-                setTimeout(() => confetti.remove(), 5000);
+                setTimeout(() => createConfetti(), i * 20);
             }
-
-            // Create balloons
             for (let i = 0; i < 20; i++) {
-                const balloon = document.createElement("div");
-                balloon.classList.add("balloon");
-
-                balloon.style.left = Math.random() * 100 + "vw";
-                balloon.style.backgroundColor =
-                    `hsl(${Math.random() * 360}, 100%, 50%)`;
-
-                balloon.style.animationDuration =
-                    (Math.random() * 4 + 4) + "s";
-
-                document.body.appendChild(balloon);
-
-                setTimeout(() => balloon.remove(), 8000);
+                setTimeout(() => createBalloon(), i * 100);
             }
         });
+        
+        function createConfetti() {
+            const confetti = document.createElement("div");
+            confetti.classList.add("confetti");
+            confetti.style.left = Math.random() * 100 + "vw";
+            confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, ${50 + Math.random() * 20}%)`;
+            confetti.style.animationDuration = (Math.random() * 3 + 3) + "s";
+            confetti.style.animationDelay = Math.random() * 0.5 + "s";
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 8000);
+        }
+        
+        function createBalloon() {
+            const balloon = document.createElement("div");
+            balloon.classList.add("balloon");
+            balloon.style.left = Math.random() * 100 + "vw";
+            
+            // Valentine's colors
+            const colors = ['#ff69b4', '#ff1493', '#ff6b9d', '#c86dd7', '#ff8a80', '#ffc3d5'];
+            balloon.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            const drift = (Math.random() - 0.5) * 200; // Random horizontal drift
+            balloon.style.setProperty('--drift', drift + 'px');
+            balloon.style.animationDuration = (Math.random() * 4 + 6) + "s";
+            balloon.style.animationDelay = Math.random() * 0.5 + "s";
+            
+            document.body.appendChild(balloon);
+            setTimeout(() => balloon.remove(), 12000);
+        }
     </script>
-
 </body>
 </html>
-
-
